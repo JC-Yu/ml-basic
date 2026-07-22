@@ -65,7 +65,7 @@ class TestTransformer:
                     [self.idx2word[n.item()] for n in greedy_dec_predict.squeeze()])
     
 
-def greedy_decoder(self, model, enc_input, start_symbol, end_symbol):
+def greedy_decoder(model, enc_input, start_symbol, end_symbol):
     """贪心编码
     For simplicity, a Greedy Decoder is Beam search when K=1. This is necessary for inference as we don't know the
     target sequence input. Therefore we try to generate the target input word by word, then feed it into the transformer.
@@ -82,15 +82,19 @@ def greedy_decoder(self, model, enc_input, start_symbol, end_symbol):
     next_symbol = start_symbol
     while not terminal:
         # 预测阶段：dec_input序列会一点点变长（每次添加一个新预测出来的单词）
-        dec_input = torch.cat([dec_input.to(self.device), torch.tensor([[next_symbol]], dtype=enc_input.dtype).to(self.device)], -1)
+        next_symbol = int(next_symbol)
+        dec_input = torch.cat(
+            [dec_input, torch.tensor([[next_symbol]], dtype=enc_input.dtype, device=enc_input.device)],
+            -1
+        )
         dec_outputs, _, _ = model.decoder(dec_input, enc_input, enc_outputs)
-        projected = model.projection(dec_outputs)
+        projected = model.proj(dec_outputs)
         prob = projected.squeeze(0).max(dim=-1, keepdim=False)[1]
         # 增量更新（我们希望重复单词预测结果是一样的）
         # 我们在预测是会选择性忽略重复的预测的词，只摘取最新预测的单词拼接到输入序列中
         # 拿出当前预测的单词(数字)。我们用x'_t对应的输出z_t去预测下一个单词的概率，不用z_1,z_2..z_{t-1}
         next_word = prob.data[-1]
-        next_symbol = next_word
+        next_symbol = next_word.item()
         if next_symbol == end_symbol:
             terminal = True
         # print(next_word)

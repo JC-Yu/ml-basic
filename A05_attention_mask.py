@@ -26,7 +26,7 @@ def get_attn_subsequence_mask(seq):
     """
     batch_size, seq_len = seq.shape
     subsequence_mask = torch.triu(
-        torch.ones([batch_size, seq_len, seq_len], dtype=bool), 
+        torch.ones([batch_size, seq_len, seq_len], dtype=bool, device=seq.device),
         diagonal=1
     )
     return subsequence_mask

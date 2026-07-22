@@ -36,7 +36,7 @@ class DecoderLayer(nn.Module):
         # 再过交叉注意力层，Q来自dec_outputs，KV是enc_outputs
         # dec_outputs: [batch_size, tgt_len, d_model], dec_enc_attn: [batch_size, h_heads, tgt_len, src_len]
         dec_outputs, dec_enc_attn = self.dec_enc_attn(
-            dec_outputs, enc_outputs, enc_outputs
+            dec_outputs, enc_outputs, enc_outputs, dec_enc_attn_mask
         )
         # 最后过全连接层
         # [batch_size, tgt_len, d_model]
@@ -81,7 +81,7 @@ class Decoder(nn.Module):
         dec_self_attn_mask = dec_self_attn_pad_mask | dec_self_attn_subsequence_mask
 
         # 获取交叉注意力的掩码矩阵
-        dec_enc_attn_mask = get_attn_pad_mask(dec_inputs, enc_inputs)
+        dec_enc_attn_mask = get_attn_pad_mask(dec_inputs, enc_inputs, self.padding_idx)
 
         # 注意力权重列表，用于可视化热力图
         dec_self_attns = []
