@@ -1,30 +1,35 @@
+<div align="right">
+  <a href="ddpg.md">English</a> |
+  <a href="ddpg_CN.md">简体中文</a>
+</div>
+
 # DDPG
 
-DDPG 是面向连续动作空间的确定性 actor-critic 算法。它同时学习一个 actor 产生动作，和一个 critic 评估动作价值。
+DDPG is a deterministic actor-critic algorithm for continuous action spaces. It learns an actor that produces actions and a critic that evaluates their values.
 
-## 1. 数学原理
+## 1. Mathematical Principles
 
-actor 记作 $\mu_\theta(s)$，critic 记作 $Q_\phi(s, a)$。
+Let the actor be $\mu_\theta(s)$ and the critic be $Q_\phi(s, a)$.
 
-目标值由目标 actor 和目标 critic 给出：
+The target value is computed with the target actor and target critic:
 
 $$
 y = r + \gamma (1 - d) Q_{\phi'}(s', \mu_{\theta'}(s'))
 $$
 
-critic 用均方误差拟合这个 target：
+The critic is trained to fit this target with mean squared error:
 
 $$
 L_{\text{critic}} = \left(Q_\phi(s, a) - y\right)^2
 $$
 
-actor 通过最大化 critic 估计的 Q 值来更新：
+The actor is updated by maximizing the Q value estimated by the critic:
 
 $$
 L_{\text{actor}} = -Q_\phi(s, \mu_\theta(s))
 $$
 
-目标网络采用软更新：
+The target networks are updated with soft updates:
 
 $$
 \theta' \leftarrow (1 - \tau)\theta' + \tau \theta
@@ -34,34 +39,34 @@ $$
 \phi' \leftarrow (1 - \tau)\phi' + \tau \phi
 $$
 
-## 2. 伪代码
+## 2. Pseudocode
 
 ```text
-initialize actor, critic, target actor, target critic
+initialize actor, critic, target actor, and target critic
 initialize replay buffer
 
 for each environment step:
     a = actor(s) + exploration noise
     store (s, a, r, s', done)
 
-    if replay buffer is ready:
-        sample minibatch
+    if the replay buffer is ready:
+        sample a minibatch
         y = r + gamma * (1 - done) * critic_target(s', actor_target(s'))
         minimize critic loss
         minimize actor loss = -critic(s, actor(s))
         softly update target networks
 ```
 
-## 3. 代码映射
+## 3. Code Mapping
 
-实现位于 [`modules/ddpg.py`](../modules/ddpg.py)。
+The implementation is in [`modules/ddpg.py`](../modules/ddpg.py).
 
-`Actor` 直接输出连续动作，再乘 `tanh` 和动作上界。`Critic` 拼接 state 和 action 做回归。`DDPGAgent.select_action()` 在 actor 输出上加高斯噪声，测试脚本里把噪声强度从 `0.3` 线性降到 `0.05`。
+`Actor` directly outputs continuous actions, followed by `tanh` and scaling by the action limit. `Critic` concatenates the state and action and regresses a Q value. `DDPGAgent.select_action()` adds Gaussian noise to the actor output. In the test script, the noise scale is linearly reduced from `0.3` to `0.05`.
 
-`DDPGAgent.update()` 的核心是先更新 critic，再更新 actor，最后做软更新。
+The core of `DDPGAgent.update()` is to update the critic first, then update the actor, and finally perform the soft updates.
 
-测试脚本位于 [`tests/test_ddpg.py`](../tests/test_ddpg.py)，环境是 `Pendulum-v1`。
+The test script is [`tests/test_ddpg.py`](../tests/test_ddpg.py), using the `Pendulum-v1` environment.
 
-## 4. 参考
+## 4. Reference
 
 Lillicrap et al., *Continuous control with deep reinforcement learning*.

@@ -1,17 +1,22 @@
-# ACT：Action Chunking and Temporal Ensembling
+<div align="right">
+  <a href="act.md">English</a> |
+  <a href="act_CN.md">简体中文</a>
+</div>
 
-这里的实现用于直观展示机器人模仿学习中的两个核心机制：
+# ACT: Action Chunking and Temporal Ensembling
 
-1. **Action Chunking**：策略一次预测未来一段连续动作，而不是只预测当前时刻的一个动作。
-2. **Temporal Ensembling**：将不同时间预测得到、但对应当前时刻的多个动作进行加权平均，从而减小动作抖动。
+This implementation is designed to clearly demonstrate two core mechanisms in robot imitation learning:
 
-这是一个面向学习和阅读的简化实现。策略网络使用 MLP，不包含论文 ACT 中更完整的 Transformer、VAE 和图像编码器结构，重点放在动作块预测和时间集成本身。
+1. **Action Chunking**: The policy predicts a sequence of future actions instead of only predicting the action at the current time step.
+2. **Temporal Ensembling**: Multiple predictions for the current time step, generated at different time steps, are combined with a weighted average to reduce action jitter.
 
-## 1. 数学原理
+This is a simplified implementation intended for learning and reading. The policy uses an MLP and does not include the complete Transformer, VAE, or image encoder structure from the original ACT work. The focus is on action chunk prediction and temporal ensembling.
+
+## 1. Mathematical Principles
 
 ### 1.1 Action Chunking
 
-给定当前观测 $o_t$，策略不只输出当前动作，而是输出长度为 $K$ 的动作块：
+Given the current observation $o_t$, the policy predicts an action chunk of length $K$:
 
 $$
 \hat{A}_t = \pi_\theta(o_t)
@@ -24,9 +29,9 @@ $$
 \right]
 $$
 
-其中 $\hat{a}_{t}^{(i)}$ 表示在时刻 $t$ 进行预测时，对未来第 $i$ 步动作的预测。
+Here, $\hat{a}_{t}^{(i)}$ is the prediction for the action at future step $i$, made from the observation at time $t$.
 
-演示数据中对应的目标动作块为：
+The corresponding target action chunk from demonstrations is:
 
 $$
 A_t =
@@ -38,7 +43,7 @@ a_{t+K-1}
 \right]
 $$
 
-策略通过监督学习拟合演示动作块，损失函数为：
+The policy is trained with supervised imitation learning:
 
 $$
 \mathcal{L}(\theta)
@@ -51,7 +56,7 @@ $$
 \right]
 $$
 
-代码中策略输出先经过 `tanh`，再乘以 `action_scale`：
+The code applies `tanh` to the policy output and then multiplies it by `action_scale`:
 
 $$
 \hat{A}_t
@@ -59,25 +64,25 @@ $$
 s\cdot\tanh\left(\operatorname{MLP}_\theta(o_t)\right)
 $$
 
-这样可以将每个动作限制在 $[-s,s]$ 范围内。
+This limits each action to the range $[-s,s]$.
 
 ### 1.2 Temporal Ensembling
 
-在实际执行过程中，每个时间步都会重新预测一个动作块。因此，多个历史动作块可能同时包含当前时刻 $t$ 的动作预测。
+During execution, a new action chunk is predicted at every time step. Therefore, multiple historical action chunks may contain predictions for the current time step $t$.
 
-假设动作块在时刻 $s$ 生成，则它对时刻 $t$ 的预测是：
+If an action chunk is generated at time $s$, its prediction for time $t$ is:
 
 $$
 \hat{a}_{s,t-s}
 $$
 
-其中 $t-s$ 是当前时刻在该动作块中的偏移量。只保留仍然覆盖当前时刻的动作块，并使用指数衰减权重：
+where $t-s$ is the offset of the current time step within that action chunk. Only action chunks that still cover the current time step are kept. Their weights are defined with exponential decay:
 
 $$
 w_{s,t}=\lambda^{t-s}
 $$
 
-最终执行动作是加权平均：
+The executed action is the weighted average:
 
 $$
 a_t=
@@ -88,53 +93,53 @@ a_t=
 }
 $$
 
-其中 $\lambda$ 对应代码中的 `decay`。当前时刻新预测的动作权重为 $1$，更早动作块中的预测权重逐步减小。
+Here, $\lambda$ corresponds to `decay` in the code. The newest prediction has weight $1$, while predictions from older chunks receive smaller weights.
 
-这种方式可以让多个时间步的预测相互约束，通常比每次只执行最新动作块的第一个动作更加平滑。
+This allows predictions from multiple time steps to constrain each other and usually produces smoother actions than executing only the first action of the newest chunk.
 
-## 2. 伪代码
+## 2. Pseudocode
 
 ```text
-构造演示数据：
-    对每个演示轨迹：
-        在每个时刻保存观测 obs_t
-        保存未来 K 步动作 [a_t, ..., a_{t+K-1}]
+Build demonstrations:
+    for each demonstration trajectory:
+        save observation obs_t at every time step
+        save future action chunk [a_t, ..., a_{t+K-1}]
 
-训练：
-    重复若干次：
-        随机采样一批 obs 和动作块 target_chunk
+Training:
+    repeat for several steps:
+        sample a batch of observations and target action chunks
         predicted_chunk = policy(obs)
         loss = MSE(predicted_chunk, target_chunk)
-        更新策略网络
+        update the policy network
 
-执行：
-    初始化 temporal ensembler
-    对每个时刻 t：
+Execution:
+    initialize the temporal ensembler
+    for each time step t:
         predicted_chunk = policy(obs_t)
 
-        如果不使用 temporal ensembling：
-            执行 predicted_chunk[0]
-        否则：
-            将 predicted_chunk 放入历史
-            取所有仍覆盖当前时刻的动作预测
-            按 decay 的幂次进行加权平均
-            执行加权平均后的动作
+        if temporal ensembling is disabled:
+            execute predicted_chunk[0]
+        else:
+            add predicted_chunk to the history
+            collect predictions from all valid overlapping chunks
+            compute their weighted average using powers of decay
+            execute the weighted average action
 ```
 
-## 3. 代码映射
+## 3. Code Mapping
 
 ### 3.1 `ActionChunkPolicy`
 
-实现位于 [`modules/act.py`](../modules/act.py)。
+The implementation is in [`modules/act.py`](../modules/act.py).
 
-`ActionChunkPolicy` 是动作块预测网络：
+`ActionChunkPolicy` predicts an action chunk:
 
-- 输入：当前观测，形状为 `[B, obs_dim]`
-- 输出：动作块，形状为 `[B, chunk_len, action_dim]`
-- 网络：两层隐藏层的 MLP
-- 输出处理：`tanh` 后乘以 `action_scale`
+- Input: current observation with shape `[B, obs_dim]`
+- Output: action chunk with shape `[B, chunk_len, action_dim]`
+- Network: an MLP with two hidden layers
+- Output processing: `tanh` followed by multiplication by `action_scale`
 
-核心计算可以概括为：
+The main computation is:
 
 ```python
 chunk = self.net(obs).view(-1, chunk_len, action_dim)
@@ -143,39 +148,39 @@ return action_scale * torch.tanh(chunk)
 
 ### 3.2 `TemporalEnsembler`
 
-`TemporalEnsembler` 使用 `history` 保存最近产生的动作块，并在 `combine()` 中完成时间集成：
+`TemporalEnsembler` stores recently generated action chunks in `history` and performs temporal ensembling in `combine()`:
 
-1. 保存当前时刻产生的动作块；
-2. 找出仍然覆盖当前时刻的历史动作块；
-3. 根据动作块中的偏移量计算 `decay ** offset`；
-4. 对动作候选进行加权平均；
-5. 删除已经完全过期的动作块。
+1. Store the action chunk generated at the current time step.
+2. Find historical chunks that still cover the current time step.
+3. Compute `decay ** offset` for each valid prediction.
+4. Compute the weighted average of the action candidates.
+5. Remove action chunks that have expired.
 
-它只负责动作块的时间组合，不参与神经网络训练。
+It only combines action chunks and does not participate in neural network training.
 
 ### 3.3 `ACTAgent`
 
-`ACTAgent` 将策略网络、优化器和时间集成器组合在一起：
+`ACTAgent` combines the policy network, optimizer, and temporal ensembler:
 
-- `predict_chunk(obs)`：根据观测预测动作块；
-- `select_action(obs, ensemble=True)`：预测动作块并返回当前要执行的动作；
-- `update(obs_batch, chunk_batch)`：使用 MSE 进行模仿学习更新；
-- `reset()`：清空时间集成器的历史状态。
+- `predict_chunk(obs)`: predict an action chunk from an observation;
+- `select_action(obs, ensemble=True)`: predict a chunk and return the action to execute;
+- `update(obs_batch, chunk_batch)`: perform an MSE imitation learning update;
+- `reset()`: clear the temporal ensembler history.
 
-训练阶段只调用 `update()`。执行阶段可以通过 `ensemble=False` 对比只执行动作块第一个动作的结果，也可以通过 `ensemble=True` 使用 Temporal Ensembling。
+During training, only `update()` is needed. During execution, `ensemble=False` can be used to execute the first action of each chunk, while `ensemble=True` enables temporal ensembling.
 
-### 3.4 测试数据和可视化
+### 3.4 Test Data and Visualization
 
-测试脚本位于 [`tests/test_act.py`](../tests/test_act.py)，使用一个二维周期轨迹作为简单的机器人模仿学习任务：
+The test script is [`tests/test_act.py`](../tests/test_act.py). It uses a two-dimensional periodic trajectory as a simple robot imitation learning task:
 
-- `reference_path()`：生成二维目标轨迹；
-- `make_obs()`：将机器人位置、目标位置和周期信息组成观测；
-- `build_dataset()`：生成观测和未来动作块组成的训练数据；
-- `rollout()`：分别测试只使用 Action Chunking 和同时使用 Temporal Ensembling 的执行效果；
-- `save_path_svg()`：保存最终轨迹对比图；
-- `save_video_mp4()`：保存逐步执行的动态演示。
+- `reference_path()`: generate the two-dimensional target trajectory;
+- `make_obs()`: construct an observation from the robot position, target position, and phase information;
+- `build_dataset()`: generate observations and future action chunks;
+- `rollout()`: compare Action Chunking alone with Action Chunking plus Temporal Ensembling;
+- `save_path_svg()`: save the final trajectory comparison;
+- `save_video_mp4()`: save a step-by-step dynamic demonstration.
 
-测试中使用的主要参数为：
+The main test settings are:
 
 ```text
 obs_dim = 6
@@ -188,6 +193,6 @@ train_steps = 1000
 batch_size = 128
 ```
 
-## 4. 参考
+## 4. Reference
 
 Zhao et al., *Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware*.

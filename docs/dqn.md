@@ -1,30 +1,35 @@
+<div align="right">
+  <a href="dqn.md">English</a> |
+  <a href="dqn_CN.md">简体中文</a>
+</div>
+
 # DQN
 
-DQN 是离散动作空间里最基础的深度强化学习方法。它把动作价值函数交给一个小型神经网络拟合，再配合经验回放和目标网络稳定训练。
+DQN is one of the most basic deep reinforcement learning methods for discrete action spaces. It fits the action-value function with a small neural network and uses experience replay and a target network to stabilize training.
 
-## 1. 数学原理
+## 1. Mathematical Principles
 
-最优 Q 函数满足 Bellman 方程：
+The optimal Q function satisfies the Bellman equation:
 
 $$
 Q^*(s, a) = \mathbb{E}[r + \gamma \max_{a'} Q^*(s', a')]
 $$
 
-在实现里，用在线网络 $Q_\theta$ 预测当前动作价值，用目标网络 $Q_{\bar\theta}$ 构造监督信号：
+The implementation uses an online network $Q_\theta$ to predict the current action values and a target network $Q_{\bar\theta}$ to construct the supervision target:
 
 $$
 y = r + \gamma (1 - d)\max_{a'} Q_{\bar\theta}(s', a')
 $$
 
-训练目标是均方误差：
+The training objective is mean squared error:
 
 $$
 L = \frac{1}{N}\sum_i \left(Q_\theta(s_i, a_i) - y_i\right)^2
 $$
 
-动作选择使用 epsilon-greedy。epsilon 采用线性衰减，从 `epsilon_start` 逐步降到 `epsilon_end`。
+Action selection uses epsilon-greedy exploration. Epsilon is linearly decayed from `epsilon_start` to `epsilon_end`.
 
-## 2. 伪代码
+## 2. Pseudocode
 
 ```text
 initialize online Q network
@@ -32,36 +37,36 @@ initialize target Q network = online Q network
 initialize replay buffer
 
 for each environment step:
-    with probability epsilon choose random action
+    with probability epsilon choose a random action
     otherwise choose argmax_a Q_online(s, a)
 
     store transition (s, a, r, s', done)
 
-    if replay buffer is ready:
+    if the replay buffer is ready:
         sample a minibatch
         q = Q_online(s, a)
         y = r + gamma * (1 - done) * max_a' Q_target(s', a')
         minimize MSE(q, y)
 
         decay epsilon linearly
-        every K steps copy online network to target network
+        every K steps copy the online network to the target network
 ```
 
-## 3. 代码映射
+## 3. Code Mapping
 
-实现位于 [`modules/dqn.py`](../modules/dqn.py)。
+The implementation is in [`modules/dqn.py`](../modules/dqn.py).
 
-`QNetwork` 是一个三层 MLP，输出每个离散动作的 Q 值。`ReplayBuffer` 只做最基本的循环存储和随机采样。`DQNAgent.update()` 里用 `gather` 取出当前动作的 Q 值，再用目标网络的 `max` 构造 target。
+`QNetwork` is a three-layer MLP that outputs the Q value for every discrete action. `ReplayBuffer` only implements basic circular storage and random sampling. In `DQNAgent.update()`, `gather` selects the Q value of the action that was actually taken, and the target network's `max` constructs the target.
 
-关键逻辑对应两句：
+The key logic corresponds to these two lines:
 
 ```python
 q_values = self.q_network(states).gather(1, actions.unsqueeze(1)).squeeze(1)
 next_q_values = self.target_network(next_states).max(dim=1).values
 ```
 
-测试脚本位于 [`tests/test_dqn.py`](../tests/test_dqn.py)，环境是 `CartPole-v1`。
+The test script is [`tests/test_dqn.py`](../tests/test_dqn.py), using the `CartPole-v1` environment.
 
-## 4. 参考
+## 4. Reference
 
 Mnih et al., *Human-level control through deep reinforcement learning*.

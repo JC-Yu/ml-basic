@@ -1,66 +1,71 @@
+<div align="right">
+  <a href="sac.md">English</a> |
+  <a href="sac_CN.md">简体中文</a>
+</div>
+
 # SAC
 
-SAC 是一种面向连续动作空间的离策略 actor-critic 算法。它的核心是同时优化“高回报”和“高熵”，让策略既能学到奖励，也保留足够探索。
+SAC is an off-policy actor-critic algorithm for continuous action spaces. Its central idea is to optimize both high return and high entropy, allowing the policy to learn useful behavior while maintaining sufficient exploration.
 
-## 1. 数学原理
+## 1. Mathematical Principles
 
-SAC 使用一个随机策略 $\pi_\theta(a|s)$，本实现里把它写成 squashed Gaussian：actor 输出均值和标准差，在 `SACAgent` 中采样高斯动作，再经过 $\tanh$ 把动作压到范围内。
+SAC uses a stochastic policy $\pi_\theta(a|s)$. In this implementation, it is a squashed Gaussian policy: the actor outputs a mean and standard deviation, the `SACAgent` samples a Gaussian action, and `tanh` maps it into the action range.
 
-策略目标可写成：
+The policy objective is:
 
 $$
 J_\pi = \mathbb{E}\left[\min(Q_1(s, a), Q_2(s, a)) - \alpha \log \pi_\theta(a|s)\right]
 $$
 
-其中 $\alpha$ 是熵系数。为了简洁，这里把它固定为常数，不做自动调节。
+Here, $\alpha$ is the entropy coefficient. For simplicity, it is fixed as a constant instead of being automatically tuned.
 
-双 Q 目标值为：
+The double-Q target is:
 
 $$
 y = r + \gamma (1 - d)\left(\min(Q_1'(s', a'), Q_2'(s', a')) - \alpha \log \pi_\theta(a'|s')\right)
 $$
 
-critic 通过均方误差拟合这个 target：
+The critics fit this target with mean squared error:
 
 $$
 L_Q = \left(Q_1(s, a) - y\right)^2 + \left(Q_2(s, a) - y\right)^2
 $$
 
-目标网络使用软更新：
+The target networks use soft updates:
 
 $$
 \theta' \leftarrow (1 - \tau)\theta' + \tau \theta
 $$
 
-## 2. 伪代码
+## 2. Pseudocode
 
 ```text
-initialize actor, two critics, two target critics
+initialize actor, two critics, and two target critics
 initialize replay buffer
 
 for each environment step:
-    sample action from stochastic actor
+    sample an action from the stochastic actor
     store transition (s, a, r, s', done)
 
-    if replay buffer is ready:
-        sample minibatch
+    if the replay buffer is ready:
+        sample a minibatch
         a' ~ pi(s')
         y = r + gamma * (1 - done) * (min(Q1', Q2') - alpha * log pi(a'|s'))
-        minimize critic loss
+        minimize the critic loss
 
         a ~ pi(s)
         maximize min(Q1, Q2) - alpha * log pi(a|s)
 
-        softly update target critics
+        softly update the target critics
 ```
 
-## 3. 代码映射
+## 3. Code Mapping
 
-实现位于 [`modules/sac.py`](../modules/sac.py)。
+The implementation is in [`modules/sac.py`](../modules/sac.py).
 
-`Actor` 只输出均值和标准差：均值头使用 `tanh`，标准差头使用 `softplus`。`Critic` 和 DDPG 一样，直接把 state 和 action 拼接后回归 Q 值。`SACAgent` 内部维护两套 critic 和两套 target critic。
+`Actor` only outputs the mean and standard deviation. The mean head uses `tanh`, and the standard deviation head uses `softplus`. Like DDPG, `Critic` directly concatenates the state and action and regresses a Q value. `SACAgent` maintains two critics and two target critics.
 
-`SACAgent.update()` 里最关键的部分是：
+The most important part of `SACAgent.update()` is:
 
 ```python
 next_actions, next_log_probs = self._sample_action(next_states)
@@ -70,10 +75,10 @@ target_q = torch.min(
 ).squeeze(1) - self.alpha * next_log_probs
 ```
 
-这正是 SAC 的核心：用双 Q 估计减小过估计，同时把熵项加进目标，保持探索。
+This is the core of SAC: double-Q estimation reduces overestimation, while the entropy term encourages exploration.
 
-测试脚本位于 [`tests/test_sac.py`](../tests/test_sac.py)，环境是 `Pendulum-v1`。
+The test script is [`tests/test_sac.py`](../tests/test_sac.py), using the `Pendulum-v1` environment.
 
-## 4. 参考
+## 4. Reference
 
 Haarnoja et al., *Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor*.

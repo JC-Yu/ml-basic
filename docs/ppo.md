@@ -1,29 +1,34 @@
+<div align="right">
+  <a href="ppo.md">English</a> |
+  <a href="ppo_CN.md">简体中文</a>
+</div>
+
 # PPO
 
-PPO 是一种稳定的 on-policy actor-critic 方法。它用旧策略采样，再用 clipped objective 限制新旧策略差异，避免更新步子过大。
+PPO is a stable on-policy actor-critic method. It collects data with an old policy and uses a clipped objective to limit the difference between the new and old policies, preventing excessively large updates.
 
-## 1. 数学原理
+## 1. Mathematical Principles
 
-策略记作 $\pi_\theta(a|s)$，价值函数记作 $V_\phi(s)$。本实现使用最直接的对角高斯策略：
+Let the policy be $\pi_\theta(a|s)$ and the value function be $V_\phi(s)$. This implementation uses a diagonal Gaussian policy:
 
 $$
 \mu_\theta(s) = a_{\max}\tanh(f_\mu(s)), \qquad
 \sigma_\theta(s) = \operatorname{softplus}(f_\sigma(s))
 $$
 
-然后使用
+The policy distribution is:
 
 $$
 \pi_\theta(a|s) = \mathcal{N}(a;\mu_\theta(s), \sigma_\theta(s))
 $$
 
-策略比率为：
+The policy ratio is:
 
 $$
 \rho_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)}
 $$
 
-GAE 计算优势：
+The GAE advantage is computed as:
 
 $$
 \delta_t = r_t + \gamma V_\phi(s_{t+1})(1-d_t) - V_\phi(s_t)
@@ -33,50 +38,50 @@ $$
 A_t = \delta_t + \gamma \lambda (1-d_t)A_{t+1}
 $$
 
-clipped policy loss：
+The clipped policy loss is:
 
 $$
 L^{\text{clip}} = \mathbb{E}\left[\min(\rho_tA_t, \text{clip}(\rho_t, 1-\epsilon, 1+\epsilon)A_t)\right]
 $$
 
-value loss：
+The value loss is:
 
 $$
 L_V = \mathbb{E}\left[(V_\phi(s_t) - R_t)^2\right],
 \qquad R_t = A_t + V_\phi(s_t)
 $$
 
-## 2. 伪代码
+## 2. Pseudocode
 
 ```text
-initialize actor_new, actor_old, critic
+initialize actor_new, actor_old, and critic
 copy actor_new to actor_old
 initialize replay buffer
 
 for each episode:
     use actor_old to collect transitions (s, a, r, s', done)
-    store them in replay buffer
+    store them in the replay buffer
 
-    compute values and next values with critic
+    compute values and next values with the critic
     compute GAE advantages and returns
 
     for several epochs:
         sample minibatches from the buffer
         compute ratio = pi_new(a|s) / pi_old(a|s)
-        update actor_new with clipped objective
+        update actor_new with the clipped objective
         update critic with MSE loss
 
     copy actor_new to actor_old
-    clear replay buffer
+    clear the replay buffer
 ```
 
-## 3. 代码实现
+## 3. Code Mapping
 
-实现位于 [`modules/ppo.py`](../modules/ppo.py)。
+The implementation is in [`modules/ppo.py`](../modules/ppo.py).
 
-`Actor` 用两个 head 分别输出 mean 和 std，其中 mean 使用 `tanh`，std 使用 `softplus`。`ReplayBuffer` 只保存 `(state, action, reward, next_state, done)`，不保存 log prob 和 value。`PPOAgent` 在 `update()` 里现算 GAE、现算 old/new log prob，然后分别优化 actor 和 critic。
+`Actor` uses two heads to output the mean and standard deviation. The mean head uses `tanh`, and the standard deviation head uses `softplus`. `ReplayBuffer` only stores `(state, action, reward, next_state, done)` instead of storing log probabilities and values. `PPOAgent` computes GAE and the old/new log probabilities inside `update()`, then optimizes the actor and critic separately.
 
-核心代码对应这两句：
+The core code corresponds to:
 
 ```python
 old_mean, old_std = self.actor_old(states)
@@ -88,12 +93,12 @@ dist = torch.distributions.Normal(mean, std)
 new_log_probs = dist.log_prob(actions[mb]).sum(dim=-1)
 ```
 
-`actor_old` 只负责采样和提供旧策略概率，`actor_new` 负责学习。更新完成后，`actor_old` 直接同步 `actor_new`。对于有界环境，环境可以在执行动作时进行裁剪，但 PPO 仍然对策略实际采样的动作计算概率。
+`actor_old` is used for sampling and for evaluating the old policy probability. `actor_new` is optimized during training. After an update, `actor_old` is synchronized directly with `actor_new`. For bounded environments, the environment may clip the executed action, but PPO still computes the policy probability for the action sampled from the policy.
 
-GAE 得到优势后，本实现对当前 rollout 的优势做标准化，再用于 PPO 损失。优势标准化不是 GAE 定义的一部分，但它是 PPO 连续控制实现中常用的稳定化步骤。
+After GAE is computed, this implementation standardizes the advantages for the current rollout before using them in the PPO loss. Advantage standardization is not part of the definition of GAE, but it is a common stabilization step in continuous-control PPO implementations.
 
-测试脚本位于 [`tests/test_ppo.py`](../tests/test_ppo.py)，环境是 `Pendulum-v1`。
+The test script is [`tests/test_ppo.py`](../tests/test_ppo.py), using the `Pendulum-v1` environment.
 
-## 4. 参考
+## 4. Reference
 
 Schulman et al., *Proximal Policy Optimization Algorithms*.

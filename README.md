@@ -1,78 +1,64 @@
-# ml-basic
-
-`ml-basic` 是一份面向 Robotics 的机器学习基础模块代码库。项目用尽可能简洁、直观、单文件的方式实现常见算法，直接进入算法核心逻辑。
-
-当前代码覆盖了 Transformer、Deep Reinforcement Learning、Diffusion、Flow Matching、Action Chunking 等基础内容。每个模块尽量保持独立，测试脚本会给出最小可运行示例，并保存训练曲线和动态演示结果。
-
-<div align="center">
-  <p>
-    <img src="assets/dqn_eval.gif" alt="DQN evaluation" width="320">
-    <img src="assets/ddpg_pendulum_eval.gif" alt="DDPG Pendulum evaluation" width="320">
-  </p>
-  <p>
-    <img src="assets/flow_matching_dynamics.gif" alt="Flow Matching dynamics" width="360">
-    <img src="assets/diffusion_denoising.gif" alt="Diffusion denoising" width="360">
-  </p>
-  <p>
-    <img src="assets/act_rollout.gif" alt="Action Chunking rollout" width="620">
-  </p>
+<div align="right">
+  <a href="README.md">English</a> |
+  <a href="README_CN.md">简体中文</a>
 </div>
 
-## 代码结构
+# ml-basic
+
+`ml-basic` is a collection of foundational machine learning modules for robotics research. The project implements common algorithms in concise, intuitive, single-file examples, allowing readers to focus directly on the core ideas.
+
+The current codebase covers Transformer, Deep Reinforcement Learning, Diffusion, Flow Matching, Action Chunking, and other foundational topics. Each module is kept as independent as possible. The test scripts provide minimal runnable examples and save training curves and dynamic demonstrations.
+
+## Project Structure
 
 ```text
 ml-basic/
-├── modules/                  # 核心算法实现，每个文件尽量独立、简洁
-│   ├── attention.py           # Attention 基础实现
-│   ├── transformer.py         # Transformer 基础模块
-│   ├── dqn.py                 # DQN / Double DQN 风格实现
-│   ├── ddpg.py                # DDPG 连续控制实现
-│   ├── ppo.py                 # PPO 连续控制实现
-│   ├── sac.py                 # SAC 连续控制实现
-│   ├── diffusion.py           # 简易 diffusion 实现
-│   ├── flow_matching.py       # 简易 flow matching 实现
-│   └── act.py                 # Action Chunking / Temporal Ensembling 示例
-├── tests/                    # 可直接运行的测试脚本
-│   ├── test_dqn.py
-│   ├── test_ddpg.py
-│   ├── test_ppo.py
-│   ├── test_sac.py
-│   ├── test_diffusion.py
-│   ├── test_flow_matching.py
-│   └── test_act.py
-├── docs/                     # 算法说明文档
-├── assets/                   # README 或文档可引用的静态资源
-├── pyproject.toml            # 项目依赖配置
-└── uv.lock                   # uv 锁文件
+├── modules/                  # Core algorithm implementations
+│   ├── attention.py           # Basic Attention implementation
+│   ├── transformer.py         # Basic Transformer module
+│   ├── dqn.py                 # DQN / Double DQN-style implementation
+│   ├── ddpg.py                # DDPG for continuous control
+│   ├── ppo.py                 # PPO for continuous control
+│   ├── sac.py                 # SAC for continuous control
+│   ├── diffusion.py           # Simple Diffusion implementation
+│   ├── flow_matching.py       # Simple Flow Matching implementation
+│   └── act.py                 # Action Chunking / Temporal Ensembling example
+├── tests/                     # Runnable test scripts
+├── docs/                      # Algorithm documentation
+├── assets/                    # Static assets for the README and documentation
+├── pyproject.toml             # Project dependency configuration
+└── uv.lock                   # uv lock file
 ```
 
-## 环境配置
+## Environment Setup
 
-项目使用 Python 3.10，并通过 `uv` 管理依赖。
+The project uses Python 3.10 and `uv` for dependency management.
 
 ```bash
-cd ml_basic/
+cd ml-basic/
 uv sync
 ```
 
-如果已经创建好虚拟环境，也可以直接激活：
+If the virtual environment has already been created, activate it directly:
 
 ```bash
 source .venv/bin/activate
 ```
 
-## 使用方式
+## Usage
 
-所有测试脚本都可以直接从项目根目录运行。
+All test scripts can be run directly from the project root.
 
 ```bash
 cd ml-basic
-python tests/test_**.py
+python tests/test_dqn.py
 ```
 
-## 算法文档
+Replace `test_dqn.py` with another test script to run a different algorithm.
 
-更详细的算法解释可以参考 `docs/` 目录：
+## Algorithm Documentation
+
+Detailed algorithm explanations are available in the `docs/` directory:
 
 - [DQN](docs/dqn.md)
 - [DDPG](docs/ddpg.md)
@@ -80,27 +66,28 @@ python tests/test_**.py
 - [SAC](docs/sac.md)
 - [Flow Matching](docs/flow_matching.md)
 - [Diffusion](docs/diffusion.md)
+- [ACT](docs/act.md)
 
-每份文档通常包含：
+Each document usually includes:
 
-- 算法背景
-- 基本数学原理
-- 伪代码
-- 代码实现对应关系
-- 测试输出说明
+- Algorithm background
+- Basic mathematical principles
+- Pseudocode
+- Mapping between the explanation and the implementation
+- Test output description
 
-## 设计原则
+## Design Principles
 
-本项目的实现原则是：
+The project follows these principles:
 
-- 单文件优先：每个核心算法尽量放在一个 `modules/*.py` 文件中。
-- 简洁优先：避免过度封装和复杂工程结构。
-- 可读优先：变量命名尽量贴近算法概念。
-- 可运行优先：每个主要模块都配有测试脚本。
-- 可视化优先：测试结果尽量输出曲线或动态演示，方便直观理解。
+- **Single-file first:** Keep each core algorithm in one `modules/*.py` file whenever possible.
+- **Simplicity first:** Avoid excessive abstraction and complex engineering structures.
+- **Readability first:** Use variable names that stay close to the algorithmic concepts.
+- **Runnable first:** Provide a test script for each major module.
+- **Visualization first:** Save curves or dynamic demonstrations whenever possible, making the algorithms easier to understand intuitively.
 
-## 注意事项
+## Notes
 
-强化学习算法的训练效果会受到随机种子、训练轮数、环境版本和硬件差异影响。当前实现主要用于理解算法流程，不保证达到最优性能。
+The training performance of reinforcement learning algorithms depends on random seeds, the number of training episodes, environment versions, and hardware differences. The current implementations are mainly intended for understanding algorithmic workflows and are not guaranteed to achieve optimal performance.
 
-如果只想阅读算法，建议先看 `modules/` 中对应的单文件实现，再运行 `tests/` 中的最小测试脚本，最后对照 `docs/` 中的数学说明。
+If you only want to study the algorithms, start with the corresponding single-file implementation in `modules/`, run the minimal test script in `tests/`, and then read the mathematical explanation in `docs/`.

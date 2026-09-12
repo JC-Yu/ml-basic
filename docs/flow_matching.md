@@ -1,34 +1,39 @@
+<div align="right">
+  <a href="flow_matching.md">English</a> |
+  <a href="flow_matching_CN.md">简体中文</a>
+</div>
+
 # Flow Matching
 
-Flow Matching 的目标不是直接建模密度，而是学习一个随时间变化的速度场，把简单先验分布推到目标数据分布。
+Flow Matching does not model the data density directly. Instead, it learns a time-dependent velocity field that transports a simple prior distribution to the target data distribution.
 
-## 1. 数学原理
+## 1. Mathematical Principles
 
-设源样本 $x_0 \sim p_0$，目标样本 $x_1 \sim p_1$。对任意时间 $t \in [0, 1]$，做线性插值：
+Let the source sample be $x_0 \sim p_0$ and the target sample be $x_1 \sim p_1$. For any time $t \in [0, 1]$, use linear interpolation:
 
 $$
 x_t = (1 - t)x_0 + t x_1
 $$
 
-这条直线路径的速度是常数：
+The velocity along this straight path is constant:
 
 $$
 u_t = \frac{d x_t}{d t} = x_1 - x_0
 $$
 
-模型学习一个条件向量场 $v_\theta(x_t, t)$，让它去拟合这个速度：
+The model learns a conditional vector field $v_\theta(x_t, t)$ to fit this velocity:
 
 $$
 L = \mathbb{E}\left[\|v_\theta(x_t, t) - u_t\|^2\right]
 $$
 
-采样时，从高斯先验出发，沿着学到的速度场做 Euler 积分：
+During sampling, start from a Gaussian prior and integrate the learned velocity field with Euler integration:
 
 $$
 x_{k+1} = x_k + v_\theta(x_k, t_k)\Delta t
 $$
 
-## 2. 伪代码
+## 2. Pseudocode
 
 ```text
 sample source batch x0 and target batch x1
@@ -43,14 +48,14 @@ for sampling:
         x = x + v_theta(x, t_k) * dt
 ```
 
-## 3. 代码映射
+## 3. Code Mapping
 
-实现位于 [`modules/flow_matching.py`](../modules/flow_matching.py)。
+The implementation is in [`modules/flow_matching.py`](../modules/flow_matching.py).
 
-`FlowField` 是一个把 `x` 和 `t` 拼接后输入的 MLP。`FlowMatching.update()` 直接构造线性插值点和目标速度。`sample_trajectory()` 用固定步长的 Euler 法生成整条轨迹，`sample()` 只取最后一步。
+`FlowField` is an MLP that concatenates `x` and `t` before processing them. `FlowMatching.update()` directly constructs the linear interpolation point and target velocity. `sample_trajectory()` generates the full trajectory with fixed-step Euler integration, while `sample()` returns only the final step.
 
-测试脚本位于 [`tests/test_flow_matching.py`](../tests/test_flow_matching.py)，数据是二维 8-Gaussians，训练后会保存速度场采样结果和动态轨迹。
+The test script is [`tests/test_flow_matching.py`](../tests/test_flow_matching.py). It uses a two-dimensional 8-Gaussians dataset and saves the learned velocity-field samples and a dynamic trajectory after training.
 
-## 4. 参考
+## 4. Reference
 
 Lipman et al., *Flow Matching for Generative Modeling*.
