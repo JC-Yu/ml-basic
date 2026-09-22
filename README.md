@@ -22,7 +22,6 @@ ml-basic/
 │   ├── td3.py                 # TD3 for continuous control
 │   ├── ppo.py                 # PPO for continuous control
 │   ├── trpo.py                # TRPO trust-region policy optimization
-│   ├── a3c.py                 # A3C asynchronous actor-critic
 │   ├── sac.py                 # SAC for continuous control
 │   ├── diffusion.py           # Simple Diffusion implementation
 │   ├── flow_matching.py       # Simple Flow Matching implementation
@@ -70,7 +69,6 @@ Detailed algorithm explanations are available in the `docs/` directory:
 - [TD3](docs/td3.md)
 - [PPO](docs/ppo.md)
 - [TRPO](docs/trpo.md)
-- [A3C](docs/a3c.md)
 - [SAC](docs/sac.md)
 - [Flow Matching](docs/flow_matching.md)
 - [Diffusion](docs/diffusion.md)

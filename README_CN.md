@@ -22,7 +22,6 @@ ml-basic/
 │   ├── td3.py                 # TD3 连续控制实现
 │   ├── ppo.py                 # PPO 连续控制实现
 │   ├── trpo.py                # TRPO 信赖域策略优化实现
-│   ├── a3c.py                # A3C 异步 actor-critic 实现
 │   ├── sac.py                 # SAC 连续控制实现
 │   ├── diffusion.py           # 简易 diffusion 实现
 │   ├── flow_matching.py       # 简易 flow matching 实现
@@ -68,7 +67,6 @@ python tests/test_**.py
 - [TD3](docs/td3_CN.md)
 - [PPO](docs/ppo_CN.md)
 - [TRPO](docs/trpo_CN.md)
-- [A3C](docs/a3c_CN.md)
 - [SAC](docs/sac_CN.md)
 - [Flow Matching](docs/flow_matching_CN.md)
 - [Diffusion](docs/diffusion_CN.md)
