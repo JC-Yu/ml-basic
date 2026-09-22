@@ -17,8 +17,12 @@ ml-basic/
 │   ├── attention.py           # Basic Attention implementation
 │   ├── transformer.py         # Basic Transformer module
 │   ├── dqn.py                 # DQN / Double DQN-style implementation
+│   ├── reinforce.py           # REINFORCE policy-gradient implementation
 │   ├── ddpg.py                # DDPG for continuous control
+│   ├── td3.py                 # TD3 for continuous control
 │   ├── ppo.py                 # PPO for continuous control
+│   ├── trpo.py                # TRPO trust-region policy optimization
+│   ├── a3c.py                 # A3C asynchronous actor-critic
 │   ├── sac.py                 # SAC for continuous control
 │   ├── diffusion.py           # Simple Diffusion implementation
 │   ├── flow_matching.py       # Simple Flow Matching implementation
@@ -61,8 +65,12 @@ Replace `test_dqn.py` with another test script to run a different algorithm.
 Detailed algorithm explanations are available in the `docs/` directory:
 
 - [DQN](docs/dqn.md)
+- [REINFORCE](docs/reinforce.md)
 - [DDPG](docs/ddpg.md)
+- [TD3](docs/td3.md)
 - [PPO](docs/ppo.md)
+- [TRPO](docs/trpo.md)
+- [A3C](docs/a3c.md)
 - [SAC](docs/sac.md)
 - [Flow Matching](docs/flow_matching.md)
 - [Diffusion](docs/diffusion.md)

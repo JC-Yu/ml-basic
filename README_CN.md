@@ -17,8 +17,12 @@ ml-basic/
 │   ├── attention.py           # Attention 基础实现
 │   ├── transformer.py         # Transformer 基础模块
 │   ├── dqn.py                 # DQN / Double DQN 风格实现
+│   ├── reinforce.py           # REINFORCE 策略梯度实现
 │   ├── ddpg.py                # DDPG 连续控制实现
+│   ├── td3.py                 # TD3 连续控制实现
 │   ├── ppo.py                 # PPO 连续控制实现
+│   ├── trpo.py                # TRPO 信赖域策略优化实现
+│   ├── a3c.py                # A3C 异步 actor-critic 实现
 │   ├── sac.py                 # SAC 连续控制实现
 │   ├── diffusion.py           # 简易 diffusion 实现
 │   ├── flow_matching.py       # 简易 flow matching 实现
@@ -59,8 +63,12 @@ python tests/test_**.py
 更详细的算法解释可以参考 `docs/` 目录：
 
 - [DQN](docs/dqn_CN.md)
+- [REINFORCE](docs/reinforce_CN.md)
 - [DDPG](docs/ddpg_CN.md)
+- [TD3](docs/td3_CN.md)
 - [PPO](docs/ppo_CN.md)
+- [TRPO](docs/trpo_CN.md)
+- [A3C](docs/a3c_CN.md)
 - [SAC](docs/sac_CN.md)
 - [Flow Matching](docs/flow_matching_CN.md)
 - [Diffusion](docs/diffusion_CN.md)
