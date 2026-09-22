@@ -1,16 +1,14 @@
-<table width="100%">
-  <tr>
-    <td>
-      <a href="https://www.python.org/downloads/release/python-3100/"><img src="https://img.shields.io/badge/Python-3.10-blue.svg" alt="Python 3.10"></a>
-      <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-green.svg" alt="License: Apache 2.0"></a>
-      <a href="pyproject.toml"><img src="https://img.shields.io/badge/Version-v0.1.0-orange.svg" alt="Version v0.1.0"></a>
-      <a href="https://github.com/JC-Yu/ml-basic/stargazers"><img src="https://img.shields.io/github/stars/JC-Yu/ml-basic?style=social" alt="GitHub stars"></a>
-    </td>
-    <td align="right">
-      <a href="README.md">English</a> | <a href="README_CN.md">简体中文</a>
-    </td>
-  </tr>
-</table>
+<div align="right">
+  <a href="README.md">English</a> |
+  <a href="README_CN.md">简体中文</a>
+</div>
+
+<p align="left">
+  <a href="https://www.python.org/downloads/release/python-3100/"><img src="https://img.shields.io/badge/Python-3.10-blue.svg" alt="Python 3.10"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-green.svg" alt="License: Apache 2.0"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/Version-v0.1.0-orange.svg" alt="Version v0.1.0"></a>
+  <a href="https://github.com/JC-Yu/ml-basic/stargazers"><img src="https://img.shields.io/github/stars/JC-Yu/ml-basic?style=social" alt="GitHub stars"></a>
+</p>
 
 # ml-basic
 
